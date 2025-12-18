@@ -2,40 +2,43 @@
 :local githubUrl "https://raw.githubusercontent.com/agofa/MikrotikROS_UpdateWhiteList/refs/heads/main/whitelist.txt"
 :local fileName "whitelist_temp.txt"
 
-# Download del file da GitHub
+# Scarica il file da GitHub
 /tool fetch url=$githubUrl mode=https dst-path=$fileName
 
-:delay 2s;
+# Attende che il file sia presente (max 10 secondi)
+:local counter 0
+:while ([:len [/file find name=$fileName]] = 0 and $counter < 10) do={
+    :delay 1s
+    :set counter ($counter + 1)
+}
 
 :if ([:len [/file find name=$fileName]] > 0) do={
-    :local fileContent [/file get $fileName contents]
-    :local lineEnd 0
-    :local lastEnd 0
 
-    # Rimuove le vecchie voci di whitelist (tipo FWD)
+    :local fileContent [/file get $fileName contents]
+    :local lastEnd 0
+    :local lineEnd 0
+
+    # Rimuove le vecchie voci di tipo FWD
     /ip dns static remove [/ip dns static find type=FWD]
 
-    :while ($lineEnd < [:len $fileContent]) do={
+    :while ($lastEnd < [:len $fileContent]) do={
+
         :set lineEnd [:find $fileContent "\n" $lastEnd]
-        :if ([:len $lineEnd] = 0) do={ :set lineEnd [:len $fileContent] }
-        
+        :if ($lineEnd = -1) do={ :set lineEnd [:len $fileContent] }
+
         :local line [:pick $fileContent $lastEnd $lineEnd]
-        
-        # Pulizia caratteri \r
-        :local cleanLine ""
-        :for i from=0 to=([:len $line] - 1) do={
-            :local char [:pick $line $i]
-            :if ($char != "\r") do={ :set cleanLine ($cleanLine . $char) }
-        }
-        
-        # --- NUOVA LOGICA: Salta commenti e righe vuote ---
-        # Prende il primo carattere della riga
-        :local firstChar [:pick $cleanLine 0 1]
-        
-        :if ([:len $cleanLine] > 0 and $firstChar != "#") do={
-            
-            # Riconoscimento Regex
-            :if ([:find $cleanLine "^"] != -1 or [:find $cleanLine "$"] != -1 or [:find $cleanLine "\\"] != -1 or [:find $cleanLine ".*"] != -1) do={
+
+        # Rimuove caratteri \r e spazi iniziali/finali
+        :local cleanLine [:pick $line 0 [:len $line]]
+        :set cleanLine [:pick [:put $line] 0 [:len $line]]
+        :set cleanLine [:pick [:put $line] 0 [:len $line]] # <-- questa linea può essere rimossa se doppia
+        :set cleanLine [:trim $line]
+
+        # Salta righe vuote o commenti
+        :if ([:len $cleanLine] > 0 and [:pick $cleanLine 0 1] != "#") do={
+
+            # Controlla se contiene caratteri speciali regex
+            :if ([:find $cleanLine "^"] != -1 or [:find $cleanLine "$"] != -1 or [:find $cleanLine "*"] != -1 or [:find $cleanLine "."] != -1 or [:find $cleanLine "\\"] != -1) do={
                 /ip dns static add regexp=$cleanLine type=FWD forward-to=8.8.8.8
                 :put ("Aggiunta Regex: " . $cleanLine)
             } else={
@@ -43,12 +46,14 @@
                 :put ("Aggiunto Dominio: " . $cleanLine)
             }
         }
-        
+
         :set lastEnd ($lineEnd + 1)
     }
 
+    # Rimuove il file temporaneo
     /file remove $fileName
-    :log info "Whitelist DNS aggiornata (commenti ignorati)."
+    :log info "Whitelist DNS aggiornata correttamente."
+    
 } else={
     :log error "Errore: impossibile scaricare il file da GitHub."
 }
