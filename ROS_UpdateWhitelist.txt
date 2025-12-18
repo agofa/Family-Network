@@ -1,5 +1,5 @@
 # Configurazione
-:local githubUrl "INSERISCI_QUI_IL_TUO_URL_RAW"
+:local githubUrl "https://raw.githubusercontent.com/agofa/MikrotikROS_UpdateWhiteList/refs/heads/main/whitelist.txt"
 :local fileName "whitelist_temp.txt"
 
 # Download del file da GitHub
