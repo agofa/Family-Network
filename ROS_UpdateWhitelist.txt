@@ -1,5 +1,5 @@
 # ==========================================
-# Whitelist DNS - versione semplice compatibile
+# Whitelist DNS - versione semplice compatibile ROS7
 # ==========================================
 
 :local githubUrl "https://raw.githubusercontent.com/agofa/MikrotikROS_UpdateWhiteList/refs/heads/main/whitelist.txt"
@@ -22,14 +22,11 @@
     :local lastEnd 0
     :local lineEnd 0
 
-
-# Cancella tutte le whitelist precedenti (compatibile ROS7)
-:local ids [/ip dns static find where type=fwd]
-
-:if ([:len $ids] > 0) do={
-    /ip dns static remove $ids
-}
-
+    # Cancella tutte le whitelist precedenti (compatibile ROS7)
+    :local ids [/ip dns static find where type=fwd]
+    :if ([:len $ids] > 0) do={
+        /ip dns static remove $ids
+    }
 
     # Scorre il file riga per riga
     :while ($lastEnd < [:len $data]) do={
@@ -39,7 +36,7 @@
 
         :local line [:pick $data $lastEnd $lineEnd]
 
-        # --- RIMUOVE \r SE PRESENTE ---
+        # Rimuove CR se presente
         :if ([:len $line] > 0) do={
             :local lastChar [:pick $line ([:len $line] - 1)]
             :if ($lastChar = "\r") do={
@@ -47,7 +44,7 @@
             }
         }
 
-        # Se non è vuota, aggiungi DNS
+        # Se non è vuota, aggiunge DNS
         :if ([:len $line] > 0) do={
             /ip dns static add name=$line type=FWD forward-to=8.8.8.8
         }
@@ -57,7 +54,6 @@
 
     /file remove $fileName
     :log info "[Whitelist] Aggiornata (versione semplice compatibile)"
-
 } else={
     :log error "[Whitelist] Impossibile scaricare file!"
 }
