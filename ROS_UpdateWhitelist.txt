@@ -1,58 +1,50 @@
 # ================================
-# Aggiorna Whitelist DNS MikroTik
-# ATTENZIONE NON FUNZIONA anche se non fa danni
+# Whitelist DNS - versione semplice
+# Non si fanno controlli sul file con le URL
 # ================================
 
 :local githubUrl "https://raw.githubusercontent.com/agofa/MikrotikROS_UpdateWhiteList/refs/heads/main/whitelist.txt"
 :local fileName "whitelist_temp.txt"
 
-# Scarica il file da GitHub
+# Scarica il file
 /tool fetch url=$githubUrl mode=https dst-path=$fileName
 
-# Attende fino a 10 secondi che il file esista
+# attende max 10s che il file esista
 :local counter 0
 :while ([:len [/file find name=$fileName]] = 0 and $counter < 10) do={
     :delay 1s
     :set counter ($counter + 1)
 }
 
+# Se il file esiste...
 :if ([:len [/file find name=$fileName]] > 0) do={
 
-    :local fileContent [/file get $fileName contents]
+    :local data [/file get $fileName contents]
     :local lastEnd 0
     :local lineEnd 0
 
-    # Rimuove le vecchie voci di tipo FWD
+    # Cancella tutte le whitelist precedenti
     /ip dns static remove [/ip dns static find type=FWD]
 
-    :while ($lastEnd < [:len $fileContent]) do={
+    # Scorre il file riga per riga
+    :while ($lastEnd < [:len $data]) do={
 
-        :set lineEnd [:find $fileContent "\n" $lastEnd]
-        :if ($lineEnd = -1) do={ :set lineEnd [:len $fileContent] }
+        :set lineEnd [:find $data "\n" $lastEnd]
+        :if ($lineEnd = -1) do={ :set lineEnd [:len $data] }
 
-        :local line [:pick $fileContent $lastEnd $lineEnd]
-        :set line [:trim [:pick $line 0 [:len $line]]]  # rimuove spazi e \r
+        :local line [:pick $data $lastEnd $lineEnd]
+        :set line [:trim $line]
 
-        # Salta righe vuote o commenti
-        :if ([:len $line] > 0 and [:pick $line 0 1] != "#") do={
-
-            # Controlla se contiene caratteri speciali regex
-            :if ([:find $line "^"] != -1 or [:find $line "$"] != -1 or [:find $line "*"] != -1 or [:find $line "."] != -1 or [:find $line "\\"] != -1) do={
-                /ip dns static add regexp=$line type=FWD forward-to=8.8.8.8
-                :put "[Whitelist] Aggiunta Regex: $line"
-            } else={
-                /ip dns static add name=$line type=FWD forward-to=8.8.8.8
-                :put "[Whitelist] Aggiunto Dominio: $line"
-            }
+        :if ([:len $line] > 0) do={
+            /ip dns static add name=$line type=FWD forward-to=8.8.8.8
         }
 
         :set lastEnd ($lineEnd + 1)
     }
 
-    # Rimuove il file temporaneo
     /file remove $fileName
-    :log info "[Whitelist] DNS aggiornata correttamente."
-    
+    :log info "[Whitelist] Aggiornata (versione semplice)"
+
 } else={
-    :log error "[Whitelist] Errore: impossibile scaricare il file da GitHub."
+    :log error "[Whitelist] Impossibile scaricare file!"
 }
