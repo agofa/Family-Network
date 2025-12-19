@@ -1,5 +1,5 @@
 # ==========================================
-# Whitelist DNS - versione semplice compatibile ROS7
+# Whitelist DNS - versione semplice ROS7
 # ==========================================
 
 :local githubUrl "https://raw.githubusercontent.com/agofa/MikrotikROS_UpdateWhiteList/refs/heads/main/whitelist.txt"
@@ -8,22 +8,22 @@
 # Scarica il file
 /tool fetch url=$githubUrl mode=https dst-path=$fileName
 
-# attende max 10s che il file esista
+# Attende fino a 10 secondi che il file esista
 :local counter 0
 :while ([:len [/file find name=$fileName]] = 0 and $counter < 10) do={
     :delay 1s
     :set counter ($counter + 1)
 }
 
-# Se il file esiste...
+# Se il file esiste
 :if ([:len [/file find name=$fileName]] > 0) do={
 
     :local data [/file get $fileName contents]
     :local lastEnd 0
     :local lineEnd 0
 
-    # Cancella tutte le whitelist precedenti (compatibile ROS7)
-    :local ids [/ip dns static find where type=fwd]
+    # Cancella tutte le entry aggiunte dallo script (comment="added-by-whitelist")
+    :local ids [/ip dns static find where comment="added-by-whitelist"]
     :if ([:len $ids] > 0) do={
         /ip dns static remove $ids
     }
@@ -36,7 +36,7 @@
 
         :local line [:pick $data $lastEnd $lineEnd]
 
-        # Rimuove CR se presente
+        # Rimuove CR finale se presente
         :if ([:len $line] > 0) do={
             :local lastChar [:pick $line ([:len $line] - 1)]
             :if ($lastChar = "\r") do={
@@ -44,16 +44,17 @@
             }
         }
 
-        # Se non è vuota, aggiunge DNS
+        # Se la riga non è vuota, aggiunge la voce DNS con commento
         :if ([:len $line] > 0) do={
-            /ip dns static add name=$line type=FWD forward-to=8.8.8.8
+            /ip dns static add name=$line forward-to=8.8.8.8 comment="added-by-whitelist"
         }
 
         :set lastEnd ($lineEnd + 1)
     }
 
     /file remove $fileName
-    :log info "[Whitelist] Aggiornata (versione semplice compatibile)"
+    :log info "[Whitelist] Aggiornata (versione semplice ROS7)"
+
 } else={
     :log error "[Whitelist] Impossibile scaricare file!"
 }
