@@ -1,7 +1,7 @@
-# ================================
+# ==========================================
 # Whitelist DNS - versione semplice
 # Non si fanno controlli sul file con le URL
-# ================================
+# ==========================================
 
 :local githubUrl "https://raw.githubusercontent.com/agofa/MikrotikROS_UpdateWhiteList/refs/heads/main/whitelist.txt"
 :local fileName "whitelist_temp.txt"
