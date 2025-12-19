@@ -1,5 +1,6 @@
 # ================================
 # Aggiorna Whitelist DNS MikroTik
+# ATTENZIONE NON FUNZIONA anche se non fa danni
 # ================================
 
 :local githubUrl "https://raw.githubusercontent.com/agofa/MikrotikROS_UpdateWhiteList/refs/heads/main/whitelist.txt"
