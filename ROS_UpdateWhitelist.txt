@@ -1,6 +1,5 @@
 # ==========================================
 # Whitelist DNS - versione semplice ROS7
-# Salta automaticamente righe vuote
 # ==========================================
 
 :local githubUrl "https://raw.githubusercontent.com/agofa/MikrotikROS_UpdateWhiteList/refs/heads/main/whitelist.txt"
@@ -23,7 +22,7 @@
     :local lastEnd 0
     :local lineEnd 0
 
-    # Cancella tutte le entry aggiunte dallo script
+    # Cancella tutte le entry aggiunte dallo script (comment="added-by-whitelist")
     :local ids [/ip dns static find where comment="added-by-whitelist"]
     :if ([:len $ids] > 0) do={
         /ip dns static remove $ids
@@ -45,15 +44,14 @@
             }
         }
 
-        # Salta la riga vuota
+        # Se la riga non è vuota, aggiunge la voce DNS con commento
         :if ([:len $line] > 0) do={
-            /ip dns static add name="$line" type=forward forward-to=8.8.8.8 comment="added-by-whitelist"
+            /ip dns static add name=$line forward-to=8.8.8.8 comment="added-by-whitelist"
         }
 
         :set lastEnd ($lineEnd + 1)
     }
 
-    # Rimuove il file temporaneo
     /file remove $fileName
     :log info "[Whitelist] Aggiornata (versione semplice ROS7)"
 
