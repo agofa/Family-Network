@@ -46,7 +46,7 @@
 
         # Se la riga non è vuota, aggiunge la voce DNS con commento
         :if ([:len $line] > 0) do={
-            /ip dns static add name=$line forward-to=8.8.8.8 comment="added-by-whitelist"
+            /ip dns static add name=$line type=FWD forward-to=8.8.8.8 comment="added-by-whitelist"
         }
 
         :set lastEnd ($lineEnd + 1)
