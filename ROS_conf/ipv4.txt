@@ -1,0 +1,178 @@
+# ----------------------------------------------------------------------
+# 1. RESET CONFIGURAZIONE - (Eseguire prima di incollare, se necessario)
+# /system reset-configuration no-defaults=yes keep-users=no
+# ----------------------------------------------------------------------
+
+# ---------------------------
+# IDENTITÀ E ORARIO
+# ---------------------------
+/system identity set name=Mater
+/system clock set time-zone-name=Europe/Rome
+
+# Disabilitazione servizi vulnerabili
+/ip service
+set telnet disabled=yes
+set ftp disabled=yes
+set www disabled=yes
+set api disabled=yes
+set api-ssl disabled=yes
+
+# Cambia la porta di Winbox (da 8291 a 18291)
+/ip service set winbox port=18291
+
+# Cambia la porta di SSH (da 22 a 2222)
+/ip service set ssh port=2222
+
+# DDNS Mikrotik
+/ip cloud set ddns-enabled=yes update-time=yes
+
+
+# ---------------------------
+# BRIDGE LAN E DHCP IPv4
+# ---------------------------
+/interface bridge add name=bridge comment="LAN bridge"
+/interface bridge port add bridge=bridge interface=ether2
+/interface bridge port add bridge=bridge interface=ether3
+/interface bridge port add bridge=bridge interface=ether4
+/interface bridge port add bridge=bridge interface=ether5
+
+/ip address add address=192.168.10.1/24 interface=bridge comment="LAN gateway"
+/ip pool add name=dhcp_pool ranges=192.168.10.50-192.168.10.100
+/ip dhcp-server add interface=bridge address-pool=dhcp_pool lease-time=1d name=dhcp1
+/ip dhcp-server network add address=192.168.10.0/24 gateway=192.168.10.1 dns-server=192.168.10.1 ntp-server=193.204.114.232,193.204.114.233 domain=home
+
+# DHCP static leases
+/ip dhcp-server lease
+add address=192.168.10.245 mac-address=00:D8:61:A3:80:BF comment=DESKTOP server=dhcp1
+add address=192.168.10.246 mac-address=10:E7:C6:D3:31:B9 comment=STAMPA_HP server=dhcp1
+add address=192.168.10.250 mac-address=00:11:32:64:1A:AD comment=SYNOLOGY_NAS server=dhcp1
+add address=192.168.10.230 mac-address=B8:3A:08:CB:23:78 comment=ACCESS_POINT_TENDA server=dhcp1
+add address=192.168.10.240 mac-address=68:FF:7B:81:F0:00 comment=POWERLINE server=dhcp1
+add address=192.168.10.200 mac-address=7C:D3:0A:18:3A:9B comment=ESXI server=dhcp1
+add address=192.168.10.221 mac-address=B8:27:EB:C1:52:A4 comment=RASPBERRY_ETH_HUB2 server=dhcp1
+add address=192.168.10.220 mac-address=B8:27:EB:94:07:F1 comment=RASPBERRY_WIFI_HUB2 server=dhcp1
+add address=192.168.10.210 mac-address=00:0C:29:FC:61:0D comment=FEDORA_VM_HUB1 server=dhcp1
+add address=192.168.10.205 mac-address=00:0C:29:2B:9E:CC comment=UBUNTU_VM_MIOCLOUD server=dhcp1
+# ---------------------------
+# WAN DHCP IPv4
+# ---------------------------
+/ip dhcp-client add interface=ether1 use-peer-dns=no add-default-route=yes comment="WAN DHCP IliadBox"
+/ip firewall nat add chain=srcnat action=masquerade out-interface=ether1 comment="NAT verso IliadBox"
+
+# ---------------------------
+# DNS Pi-Hole / Adlist / Forward
+# ---------------------------
+/ip dns set allow-remote-requests=yes servers=1.1.1.1,8.8.8.8 cache-size=40000KiB
+/ip dns adlist
+add url=https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts ssl-verify=no
+add url=https://v.firebog.net/hosts/AdguardDNS.txt ssl-verify=no
+add url=https://raw.githubusercontent.com/andyts93/pihole-italian-list/master/adlist.txt ssl-verify=no
+add url=https://adaway.org/hosts.txt ssl-verify=no
+add url=https://small.oisd.nl/ ssl-verify=no
+add url="https://v.firebog.net/hosts/lists.php?type=tick" ssl-verify=no
+add url=https://raw.githubusercontent.com/StevenBlack/hosts/master/data/add.Spam/hosts ssl-verify=no
+add url=https://raw.githubusercontent.com/StevenBlack/hosts/master/data/KADhosts/hosts ssl-verify=no
+add url=https://filippobuletto.github.io/pihole-hoax-sites-list/coronavirus-misinformation-tracking-center.txt ssl-verify=no
+add url=https://raw.githubusercontent.com/anudeepND/blacklist/master/adservers.txt ssl-verify=no
+
+/ip dns static
+add comment=added-by-whitelist forward-to=1.1.1.1 name=agofa.org type=FWD
+add comment=added-by-whitelist forward-to=1.1.1.1 name=amazon.com type=FWD
+add comment=added-by-whitelist forward-to=1.1.1.1 name=amazon.it type=FWD
+add comment=added-by-whitelist forward-to=1.1.1.1 name=brilliant.org type=FWD
+add comment=added-by-whitelist forward-to=1.1.1.1 name=digitalocean.com type=FWD
+add comment=added-by-whitelist forward-to=1.1.1.1 name=discordapp.com type=FWD
+add comment=added-by-whitelist forward-to=1.1.1.1 name=docker.com type=FWD
+add comment=added-by-whitelist forward-to=1.1.1.1 name=getpocket.com type=FWD
+add comment=added-by-whitelist forward-to=1.1.1.1 name=giallozafferano.com type=FWD
+add comment=added-by-whitelist forward-to=1.1.1.1 name=github.com type=FWD
+add comment=added-by-whitelist forward-to=1.1.1.1 name=gitlab.com type=FWD
+add comment=added-by-whitelist forward-to=1.1.1.1 name=google.com type=FWD
+add comment=added-by-whitelist forward-to=1.1.1.1 name=howlongtobeat.com type=FWD
+add comment=added-by-whitelist forward-to=1.1.1.1 name=ilpost.it type=FWD
+add comment=added-by-whitelist forward-to=1.1.1.1 name=imdb.com type=FWD
+add comment=added-by-whitelist forward-to=1.1.1.1 name=imgur.com type=FWD
+add comment=added-by-whitelist forward-to=1.1.1.1 name=isthereanydeal.com type=FWD
+add comment=added-by-whitelist forward-to=1.1.1.1 name=n26.com type=FWD
+add comment=added-by-whitelist forward-to=1.1.1.1 name=ocaml.org type=FWD
+add comment=added-by-whitelist forward-to=1.1.1.1 name=osmand.net type=FWD
+add comment=added-by-whitelist forward-to=1.1.1.1 name=primevideo.com type=FWD
+add comment=added-by-whitelist forward-to=1.1.1.1 name=projecteuler.net type=FWD
+add comment=added-by-whitelist forward-to=1.1.1.1 name=protondb.com type=FWD
+add comment=added-by-whitelist forward-to=1.1.1.1 name=reddit.com type=FWD
+add comment=added-by-whitelist forward-to=1.1.1.1 name=serverfault.com type=FWD
+add comment=added-by-whitelist forward-to=1.1.1.1 name=slack.com type=FWD
+add comment="Whitelist Google Content" forward-to=1.1.1.1 name=googleusercontent.com type=FWD
+add comment="Whitelist Spotify" forward-to=1.1.1.1 name=spotify.com type=FWD
+add comment=added-by-whitelist forward-to=1.1.1.1 name=stackexchange.com type=FWD
+add comment=added-by-whitelist forward-to=1.1.1.1 name=stackoverflow.com type=FWD
+add comment=added-by-whitelist forward-to=1.1.1.1 name=steamcommunity.com type=FWD
+add comment=added-by-whitelist forward-to=1.1.1.1 name=steampowered.com type=FWD
+add comment=added-by-whitelist forward-to=1.1.1.1 name=superuser.com type=FWD
+add comment=added-by-whitelist forward-to=1.1.1.1 name=twitch.tv type=FWD
+add comment=added-by-whitelist forward-to=1.1.1.1 name=twitter.com type=FWD
+add comment=added-by-whitelist forward-to=1.1.1.1 name=wikipedia.org type=FWD
+add comment=added-by-whitelist forward-to=1.1.1.1 name=youtube.com type=FWD
+
+# ... aggiungi altre whitelist come necessario
+
+# ---------------------------
+# FIREWALL IPv4
+# ---------------------------
+# eliminare regole esistenti
+/ip firewall filter remove [find dynamic=no]
+/ip firewall raw remove [find dynamic=no]
+
+# -----------------------------------------------------------------------------
+# 1. TABELLA RAW: Il "Buttafuori" (Protezione precoce a bassa CPU)
+# -----------------------------------------------------------------------------
+/ip firewall raw
+
+# Drop pacchetti TCP "impossibili" (senza flag)
+add chain=prerouting action=drop in-interface=ether1 protocol=tcp tcp-flags=!fin,!syn,!rst,!psh,!ack,!urg comment="RAW: Drop TCP malformati"
+
+# Anti-Spoofing: Blocca chi bussa alla WAN fingendo di avere IP della tua LAN
+add chain=prerouting action=drop in-interface=ether1 src-address=192.168.0.0/16 comment="RAW: Drop Spoofing 192.168"
+add chain=prerouting action=drop in-interface=ether1 src-address=10.0.0.0/8 comment="RAW: Drop Spoofing 10.x"
+add chain=prerouting action=drop in-interface=ether1 src-address=172.16.0.0/12 comment="RAW: Drop Spoofing 172.16"
+
+# RP-Filter (Reverse Path Filter)
+/ip settings set rp-filter=loose
+
+# -----------------------------------------------------------------------------
+# 2. TABELLA FILTER: La "Logica" (Gestione connessioni e sicurezza)
+# -----------------------------------------------------------------------------
+/ip firewall filter
+
+# --- CATENA INPUT: Protezione del Router stesso ---
+add chain=input action=accept connection-state=established,related,untracked comment="INPUT: Accetta stabiliti/untracked"
+add chain=input action=drop connection-state=invalid comment="INPUT: Drop invalidi"
+add chain=input action=accept protocol=icmp limit=5,10:packet comment="INPUT: ICMP (Ping) limitato"
+add chain=input action=accept in-interface=bridge comment="INPUT: LAN -> Router"
+# add chain=input action=accept protocol=tcp dst-port=2222,18291 in-interface=ether1 connection-state=new comment="INPUT: Gestione remota WAN"
+# add chain=input action=accept protocol=tcp dst-port=2222,18291 src-address=192.168.10.0/24 comment="INPUT: Gestione LAN"
+add chain=input action=drop in-interface=ether1 log=yes log-prefix="WAN-DROP-MGMT" comment="INPUT: DROP FINALE WAN"
+
+
+# --- CATENA FORWARD: Traffico che attraversa il router verso i tuoi dispositivi ---
+add chain=forward action=fasttrack-connection connection-state=established,related comment="FORWARD: Fasttrack (Ottimizzazione CPU)"
+add chain=forward action=accept connection-state=established,related,untracked comment="FORWARD: Accetta stabiliti"
+add chain=forward action=drop connection-state=invalid comment="FORWARD: Drop invalidi"
+
+# Protezione LAN: Blocca connessioni NUOVE da WAN che non sono port forwarding (DST-NAT)
+add chain=forward action=drop connection-nat-state=!dstnat connection-state=new in-interface=ether1 comment="FORWARD: Drop WAN non nattata"
+
+# Permessi in uscita e interni
+add chain=forward action=accept in-interface=bridge out-interface=ether1 comment="FORWARD: LAN -> WAN (Navigazione)"
+add chain=forward action=accept in-interface=bridge out-interface=bridge comment="FORWARD: Traffico interno tra dispositivi LAN"
+
+# Policy di chiusura: Se un pacchetto non è tra quelli sopra, lo uccidiamo qui
+add chain=forward action=drop in-interface=ether1 log=yes log-prefix="WAN-DROP-LAN" comment="FORWARD: DROP FINALE (Sicurezza totale WAN->LAN)"
+
+
+# ---------------------------
+# MONITORAGGIO
+# ---------------------------
+/tool graphing interface add interface=ether1
+/tool graphing resource add
+

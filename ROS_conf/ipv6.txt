@@ -1,0 +1,160 @@
+# PRIMA DI INIZIARE � cose da sapere
+#  scoprire il /64 reale assegnato dalla IliadBox
+# (dal pannello IliadBox ? IPv6 ? LAN / WAN)
+#
+# Sostituire SOLO:
+#
+# 2a01:e11:401:a950::/64
+
+# fe80::IliadBox
+
+# ==========================================================
+# IPv6 COMPLETO � ILIADBOX ONT MODE (RouterOS 7.20.6)
+# ==========================================================
+
+# ----------------------------------------------------------
+# 1. Abilitazione IPv6
+# ----------------------------------------------------------
+
+/ipv6 settings set disable-ipv6=no forward=yes
+
+# ----------------------------------------------------------
+# 2. INDIRIZZI IPv6 (UN SOLO /64)
+# ----------------------------------------------------------
+# WAN: indirizzo IPv6 del MikroTik nello stesso /64 della IliadBox
+
+/ipv6 address add
+address=2a01:e11:401:a950::2/64
+interface=ether1
+advertise=no
+comment="WAN IPv6 (stesso /64 IliadBox)"
+
+# LAN: gateway IPv6 per i client (STESSO /64)
+
+/ipv6 address add
+address=2a01:e11:401:a950::1/64
+interface=bridge
+advertise=yes
+comment="LAN IPv6 gateway"
+
+----------------------------------------------------------
+3. ROTTA DI DEFAULT (link-local IliadBox)
+----------------------------------------------------------
+Sostituire con l'indirizzo link-local reale della IliadBox
+
+/ipv6 route add
+dst-address=::/0
+gateway=fe80::IliadBox%ether1
+comment="Default route IPv6 verso IliadBox"
+
+----------------------------------------------------------
+4. NEIGHBOR DISCOVERY (RA + DNS)
+----------------------------------------------------------
+Disabilita ND ovunque
+
+/ipv6 nd set [find] disabled=yes
+
+Abilita ND SOLO sulla LAN
+
+/ipv6 nd add
+interface=bridge
+ra-interval=20s-1m
+comment="RA IPv6 LAN (SLAAC)"
+
+DNS via Router Advertisement
+
+/ipv6 nd set [find interface=bridge]
+managed-address-configuration=no
+other-configuration=yes
+dns-servers=2606:4700:4700::1111,2001:4860:4860::8888
+
+----------------------------------------------------------
+5. FIREWALL IPv6 � ADDRESS LIST (BOGON REALI)
+----------------------------------------------------------
+
+/ipv6 firewall address-list
+add address=::/128 comment="Unspecified"
+add address=::1/128 comment="Loopback"
+add address=::ffff:0:0/96 comment="IPv4-mapped"
+add address=100::/64 comment="Discard-only"
+add address=2001:db8::/32 comment="Documentation"
+add address=2001:10::/28 comment="ORCHID"
+add address=fec0::/10 comment="Site-local deprecated"
+
+----------------------------------------------------------
+6. FIREWALL IPv6 � FILTER
+----------------------------------------------------------
+
+/ipv6 firewall filter
+
+--- INPUT (protezione del router) ---
+
+add chain=input action=accept connection-state=established,related comment="v6 input: established"
+add chain=input action=drop connection-state=invalid comment="v6 input: invalid"
+
+ICMPv6 � ESSENZIALE
+
+add chain=input action=accept protocol=icmpv6 comment="v6 input: ICMPv6"
+
+LAN ? router
+
+add chain=input action=accept in-interface=bridge comment="v6 input: LAN access"
+
+Drop bogon dalla WAN
+
+add chain=input action=drop in-interface=ether1 src-address-list=bad_ipv6 comment="v6 input: drop bogon WAN"
+
+Chiusura WAN
+
+add chain=input action=drop in-interface=ether1 comment="v6 input: drop everything else WAN"
+
+--- FORWARD (traffico LAN ? WAN) ---
+
+add chain=forward action=accept connection-state=established,related comment="v6 fwd: established"
+add chain=forward action=drop connection-state=invalid comment="v6 fwd: invalid"
+
+ICMPv6 forward (PMTU, ND)
+
+add chain=forward action=accept protocol=icmpv6 comment="v6 fwd: ICMPv6"
+
+LAN ? WAN
+
+add chain=forward action=accept in-interface=bridge out-interface=ether1 comment="v6 fwd: LAN to WAN"
+
+Blocca WAN ? LAN non richiesto
+
+add chain=forward action=drop in-interface=ether1 comment="v6 fwd: block WAN to LAN"
+
+----------------------------------------------------------
+7. MSS CLAMPING (problemi MTU Iliad)
+----------------------------------------------------------
+
+/ipv6 firewall mangle
+add chain=forward
+protocol=tcp
+tcp-flags=syn
+out-interface=ether1
+action=change-mss
+new-mss=clamp-to-pmtu
+comment="v6: MSS clamping"
+
+==========================================================
+FINE CONFIGURAZIONE IPv6
+==========================================================
+?? COME VERIFICARE CHE FUNZIONA
+
+Dal MikroTik:
+
+/ping ipv6.google.com
+
+
+Da un client LAN:
+
+ping -6 google.com
+
+
+Controlla che il client abbia:
+
+indirizzo IPv6 globale
+
+gateway = 2a01:e11:401:a950::1

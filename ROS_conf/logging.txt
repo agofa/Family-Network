@@ -1,0 +1,10 @@
+/system logging action
+add name=syslogsyno target=remote remote=192.168.10.250:514 src-address=192.168.10.1 remote-log-format=syslog syslog-time-format=bsd-syslog syslog-facility=local0 syslog-severity=info
+
+/system logging
+add action=syslogsyno topics=info
+add action=syslogsyno topics=warning
+add action=syslogsyno topics=error
+add action=syslogsyno topics=critical
+
+/system logging add action=syslogsyno topics=firewall

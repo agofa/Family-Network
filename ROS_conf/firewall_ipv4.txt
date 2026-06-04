@@ -1,0 +1,41 @@
+# ---------------------------
+# FIREWALL IPv4 - LA TUA CON MODIFICHE EVIDENZIATE
+# ---------------------------
+/ip firewall filter
+
+# Input (PERFETTO - non toccare)
+add chain=input action=accept connection-state=established,related comment="Input stabiliti/relati"
+add chain=input action=accept in-interface=bridge comment="LAN verso router"
+add chain=input action=drop connection-state=invalid comment="Drop invalidi"
+add chain=input action=drop in-interface=ether1 comment="Drop WAN verso router"
+
+# Forward
+add chain=forward action=fasttrack-connection connection-state=established,related comment="Fasttrack stabiliti OK"
+*** MODIFICA 1: Aggiungi 'untracked' per coprire più connessioni ***
+add chain=forward action=fasttrack-connection connection-state=established,related,untracked comment="Fasttrack stabiliti (migliorato)"
+
+add chain=forward action=accept connection-state=established,related comment="Forward stabiliti"
+*** MODIFICA 2: RIMUOVI QUESTA - ridondante dopo fasttrack (risparmia CPU) ***
+# add chain=forward action=accept connection-state=established,related comment="Forward stabiliti KO"
+
+add chain=forward action=drop connection-state=invalid comment="Drop invalidi OK"
+
+add chain=forward action=drop connection-nat-state=!dstnat connection-state=new in-interface=ether1 comment="Drop WAN non dstnat OK"
+
+add chain=forward action=accept in-interface=bridge out-interface=ether1 comment="LAN->WAN OK"
+
+# *** MODIFICA 3: PROBLEMA - 'place-before=0' la mette in cima! ***
+# /ip firewall filter add chain=forward action=accept in-interface=bridge out-interface=bridge comment="Permetti traffico interno LAN KO" place-before=0
+# *** CORREZIONE: Aggiungi SEMPRE DOPO LAN->WAN (posizione corretta) ***
+add chain=forward action=accept in-interface=bridge out-interface=bridge comment="Permetti traffico interno LAN OK"
+
+# *** MODIFICA 4: AGGIUNGI DROP FINALE (policy di sicurezza) ***
+add chain=forward action=drop in-interface=ether1 comment="*** NUOVO: Drop tutto resto WAN->LAN ***"
+
+# *** MODIFICA 5: RAW PREROUTING (drop invalidi MOLTO PRECOCE) ***
+/ip firewall raw
+add chain=prerouting action=drop connection-state=invalid in-interface=ether1 comment="*** NUOVO: Drop invalidi WAN prima del tracking ***"
+
+# *** MODIFICA 6: ICMP (per ping/traceroute) ***
+/ip firewall filter
+add chain=input action=accept protocol=icmp limit=5/s,10:packet comment="*** NUOVO: ICMP rate-limited (diagnostica) ***"
