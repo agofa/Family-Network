@@ -2,22 +2,25 @@
 # Whitelist DNS - versione semplice ROS7
 # ==========================================
 
-:local githubUrl "https://raw.githubusercontent.com/agofa/MikrotikROS_UpdateWhiteList/refs/heads/main/whitelist.txt"
+:local githubUrl "https://raw.githubusercontent.com/agofa/Family-Network/refs/heads/main/whitelist/whitelist.txt"
 :local fileName "whitelist_temp.txt"
 
 # Scarica il file
 /tool fetch url=$githubUrl mode=https dst-path=$fileName
 
-# Attende fino a 10 secondi che il file esista
+# Attende fino a 20 secondi che il file esista
 :local counter 0
-:while ([:len [/file find name=$fileName]] = 0 and $counter < 10) do={
+:put "pronti"
+:while ([:len [/file find name=$fileName]] = 0 and $counter < 20) do={
     :delay 1s
     :set counter ($counter + 1)
+    :put "attesa"
 }
 
 # Se il file esiste
 :if ([:len [/file find name=$fileName]] > 0) do={
 
+    :put "il file"
     :local data [/file get $fileName contents]
     :local lastEnd 0
     :local lineEnd 0
@@ -44,17 +47,17 @@
             }
         }
 
-        # Se la riga non è vuota, aggiunge la voce DNS con commento
+        # Se la riga non  vuota, aggiunge la voce DNS con commento
         :if ([:len $line] > 0) do={
-            /ip dns static add name=$line type=FWD forward-to=8.8.8.8 comment="added-by-whitelist"
-        }
+            /ip dns static add name=$line type=FWD forward-to=1.1.1.1 comment="added-by-whitelist"
+            }
 
         :set lastEnd ($lineEnd + 1)
     }
 
     /file remove $fileName
-    :log info "[Whitelist] Aggiornata (versione semplice ROS7)"
+    :log info "[consenti] Aggiornata (versione semplice ROS7)"
 
 } else={
-    :log error "[Whitelist] Impossibile scaricare file!"
+    :log error "[consenti] Impossibile scaricare file!"
 }

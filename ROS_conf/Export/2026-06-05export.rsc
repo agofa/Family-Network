@@ -1,4 +1,4 @@
-# 2026-06-05 16:31:11 by RouterOS 7.23.1
+# 2026-06-05 16:48:47 by RouterOS 7.23.1
 # software id = W2XH-IHBV
 #
 # model = RBD52G-5HacD2HnD
@@ -24,7 +24,7 @@
     \n# Whitelist DNS - versione semplice ROS7\
     \n# ==========================================\
     \n\
-    \n:local githubUrl \"https://raw.githubusercontent.com/agofa/MikrotikROS_UpdateWhiteList/refs/heads/main/whitelist.txt\"\
+    \n:local githubUrl \"https://raw.githubusercontent.com/agofa/Family-Network/refs/heads/main/whitelist/whitelist.txt\"\
     \n:local fileName \"whitelist_temp.txt\"\
     \n\
     \n# Scarica il file\
@@ -116,6 +116,20 @@
 /ip dns adlist add ssl-verify=no url=https://adaway.org/hosts.txt
 /ip dns adlist add ssl-verify=no url=https://small.oisd.nl/
 /ip dns adlist add ssl-verify=no url=https://raw.githubusercontent.com/anudeepND/blacklist/master/adservers.txt
+/ip dns static add comment="Whitelist Google Content" forward-to=1.1.1.1 name=googleusercontent.com type=FWD
+/ip dns static add comment="Whitelist Spotify" forward-to=1.1.1.1 name=spotify.com type=FWD
+/ip dns static add address=192.168.10.200 comment="Nome breve ESXi" name=esxi ttl=1h type=A
+/ip dns static add address=192.168.10.250 comment="Nome breve NAS" name=syno ttl=1h type=A
+/ip dns static add address=192.168.10.210 name=seal.home type=A
+/ip dns static add address=192.168.10.210 name=cloud.home type=A
+/ip dns static add comment=added-by-whitelist forward-to=1.1.1.1 name=about-scheme type=FWD
+/ip dns static add comment=added-by-whitelist forward-to=1.1.1.1 name=chrome-extension-scheme type=FWD
+/ip dns static add comment=added-by-whitelist forward-to=1.1.1.1 name=chrome-scheme type=FWD
+/ip dns static add comment=added-by-whitelist forward-to=1.1.1.1 name=edge-scheme type=FWD
+/ip dns static add comment=added-by-whitelist forward-to=1.1.1.1 name=moz-extension-scheme type=FWD
+/ip dns static add comment=added-by-whitelist forward-to=1.1.1.1 name=opera-scheme type=FWD
+/ip dns static add comment=added-by-whitelist forward-to=1.1.1.1 name=vivaldi-scheme type=FWD
+/ip dns static add comment=added-by-whitelist forward-to=1.1.1.1 name=wyciwyg-scheme type=FWD
 /ip dns static add comment=added-by-whitelist forward-to=1.1.1.1 name=agofa.org type=FWD
 /ip dns static add comment=added-by-whitelist forward-to=1.1.1.1 name=amazon.com type=FWD
 /ip dns static add comment=added-by-whitelist forward-to=1.1.1.1 name=amazon.it type=FWD
@@ -142,21 +156,6 @@
 /ip dns static add comment=added-by-whitelist forward-to=1.1.1.1 name=reddit.com type=FWD
 /ip dns static add comment=added-by-whitelist forward-to=1.1.1.1 name=serverfault.com type=FWD
 /ip dns static add comment=added-by-whitelist forward-to=1.1.1.1 name=slack.com type=FWD
-/ip dns static add comment="Whitelist Google Content" forward-to=1.1.1.1 name=googleusercontent.com type=FWD
-/ip dns static add comment="Whitelist Spotify" forward-to=1.1.1.1 name=spotify.com type=FWD
-/ip dns static add comment=added-by-whitelist forward-to=1.1.1.1 name=stackexchange.com type=FWD
-/ip dns static add comment=added-by-whitelist forward-to=1.1.1.1 name=stackoverflow.com type=FWD
-/ip dns static add comment=added-by-whitelist forward-to=1.1.1.1 name=steamcommunity.com type=FWD
-/ip dns static add comment=added-by-whitelist forward-to=1.1.1.1 name=steampowered.com type=FWD
-/ip dns static add comment=added-by-whitelist forward-to=1.1.1.1 name=superuser.com type=FWD
-/ip dns static add comment=added-by-whitelist forward-to=1.1.1.1 name=twitch.tv type=FWD
-/ip dns static add comment=added-by-whitelist forward-to=1.1.1.1 name=twitter.com type=FWD
-/ip dns static add comment=added-by-whitelist forward-to=1.1.1.1 name=wikipedia.org type=FWD
-/ip dns static add comment=added-by-whitelist forward-to=1.1.1.1 name=youtube.com type=FWD
-/ip dns static add address=192.168.10.200 comment="Nome breve ESXi" name=esxi ttl=1h type=A
-/ip dns static add address=192.168.10.250 comment="Nome breve NAS" name=syno ttl=1h type=A
-/ip dns static add address=192.168.10.210 name=seal.home type=A
-/ip dns static add address=192.168.10.210 name=cloud.home type=A
 /ip firewall filter add action=accept chain=input comment="INPUT: Accetta stabiliti/untracked" connection-state=established,related,untracked
 /ip firewall filter add action=drop chain=input comment="INPUT: Drop invalidi" connection-state=invalid
 /ip firewall filter add action=accept chain=input comment="INPUT: ICMP (Ping) limitato" limit=5,10:packet protocol=icmp

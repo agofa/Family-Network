@@ -1,0 +1,5 @@
+/ip dns adlist
+:foreach i in=[find] do={
+    set $i ssl-verify=no
+}
+:log info "DNS Adlist: aggiornamento completato con successo."
