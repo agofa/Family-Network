@@ -27,3 +27,20 @@ https://www.waveform.com/tools/bufferbloat
 
 Disable cake
 /queue simple disable [find name=Smart-Queue-Global]
+
+
+SSL verification disabilitata sulle adlist
+ssl-verify=no
+DA FARE
+ssl-verify=yes
+E installare certificati root
+
+Script con privilegi enormi
+update_whitelist ha privilegi
+ftp,reboot,read,write,policy,test,password,sniff,sensitive,romon
+
+ridurre A
+read,write,test
+
+
+https://chatgpt.com/c/6a22e40c-d8bc-8332-b988-18124f5af6c4
