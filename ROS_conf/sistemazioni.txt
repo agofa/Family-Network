@@ -1,0 +1,29 @@
+1. Wireguard
+FedorsNotebook  allowed-address=10.0.0.3/24
+Hippo           allowed-address=10.0.0.4/24
+VPS             allowed-address=10.0.0.2/32   ✅
+Sistemare i due /24 in /32
+FATTO
+
+2. ssh Winbox aperti
+Questa è pericolosa
+add chain=input dst-port=2222,18291 in-interface=ether1 protocol=tcp connection-state=new
+
+#disabilita accesso wan
+/ip firewall filter disable [find comment="INPUT: Gestione remota WAN"] #off
+
+# abilita accesso da vpn
+/ip service set ssh address=192.168.10.0/24,10.0.0.0/24,192.168.8.0/24
+/ip service set winbox address=192.168.10.0/24,10.0.0.0/24,192.168.8.0/24
+
+
+https://www.waveform.com/tools/bufferbloat
+
+3. ADBLOCK non gestisce ipv6
+/ipv6 nd set [find interface=bridge] dns=2a01:e11:401:a951::1
+# fallback ipv4
+/ip dns set servers=2606:4700:4700::1111,2606:4700:4700::1001,2620:fe::fe,2620:fe::9,1.1.1.1,9.9.9.9
+
+
+Disable cake
+/queue simple disable [find name=Smart-Queue-Global]
