@@ -1,4 +1,4 @@
-# 2026-07-27 00:04:57 by RouterOS 7.23.2
+# 2026-07-27 00:28:35 by RouterOS 7.23.2
 # software id = W2XH-IHBV
 #
 # model = RBD52G-5HacD2HnD
@@ -116,8 +116,6 @@ add bridge=bridge interface=ether4
 add bridge=bridge interface=ether5
 /ip settings
 set rp-filter=loose
-/ipv6 settings
-set disable-ipv6=yes
 /interface list member
 add interface=wg-vpn list=LAN
 add interface=bridge list=LAN
@@ -256,7 +254,7 @@ add action=accept chain=input comment="VPN: Porta OpenVPN UDP" dst-port=1194 \
 add action=accept chain=input comment="VPN: Gestione router da IP VPN" \
     src-address=192.168.8.0/24
 add action=drop chain=input comment="INPUT: DROP FINALE WAN" in-interface=\
-    ether1 log-prefix=WAN-DROP-MGMT
+    ether1 log=yes log-prefix=WAN-DROP-MGMT
 add action=fasttrack-connection chain=forward comment=\
     "FORWARD: Fasttrack (Ottimizzazione CPU)" connection-state=\
     established,related
@@ -284,7 +282,7 @@ add action=accept chain=forward comment=\
     out-interface=bridge
 add action=drop chain=forward comment=\
     "FORWARD: DROP FINALE (Sicurezza totale WAN->LAN)" in-interface=ether1 \
-    log-prefix=WAN-DROP-LAN
+    log=yes log-prefix=WAN-DROP-LAN
 /ip firewall nat
 add action=masquerade chain=srcnat comment="NAT verso IliadBox" \
     out-interface=ether1
@@ -384,15 +382,8 @@ set time-zone-name=Europe/Rome
 set name=Mater
 /system logging
 set 3 action=memory
-/system note
-set show-at-login=no
 /system scheduler
 add comment="ADBLOCK update ogni 7 giorni" interval=1w name=run_adlist_update \
     on-event=update_adlist policy=\
     ftp,reboot,read,write,policy,test,password,sniff,sensitive,romon \
     start-date=2025-12-16 start-time=02:00:00
-add comment="Pulisci connection tracking ogni 4 ore" interval=4h name=\
-    clean-nat on-event=\
-    "/ip firewall connection remove [find]; :log info \"State cleaned\"" \
-    policy=ftp,reboot,read,write,policy,test,password,sniff,sensitive,romon \
-    start-date=2026-07-25 start-time=15:34:37

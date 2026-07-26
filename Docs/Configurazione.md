@@ -23,6 +23,8 @@ Immaginate la rete a950 come una strada privata che collega solo la Iliadbox all
         ID 1 (...:a951::/64) -> Destinata alla tua rete locale (LAN).
 
     Next Hop: Fondamentale! Inserisci l'indirizzo Link-Local (fe80::...) della porta WAN della MikroTik come Next Hop per la sottorete ID 1.
+per esempio
+fe80::c6ad:34ff:fef2:f255
 
 2. Configurazione MikroTik (Core)
 
