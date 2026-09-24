@@ -18,8 +18,9 @@
 6. [Checklist post-ripristino](#checklist-post-ripristino)
 7. [Miglioramenti da applicare](#miglioramenti-da-applicare)
 8. [Gestione del logging](#gestione-del-logging)
-9. [Pulizia — voci obsolete](#pulizia--voci-obsolete)
-10. [Note per il futuro](#note-per-il-futuro)
+9. [Dipendenze lato IliadBox](#dipendenze-lato-iliadbox)
+10. [Pulizia — voci obsolete](#pulizia--voci-obsolete)
+11. [Note per il futuro](#note-per-il-futuro)
 
 ---
 
@@ -780,6 +781,67 @@ Oppure, per una fotografia immediata senza toccare le regole:
 > ⚠️ **Il `.rsc` nel repo contiene ancora la configurazione syslog completa.**
 > Se un giorno reimporti da lì, il logging verso il Synology torna attivo.
 > Rigenera l'export dopo aver sistemato la configurazione.
+
+---
+
+## Dipendenze lato IliadBox
+
+> **Il backup del MikroTik non ripristina nulla di quello che sta sulla box.**
+> Se resetti la IliadBox, queste impostazioni spariscono senza lasciare
+> traccia sul router — dove la configurazione continuerà a sembrare perfetta.
+> È il tipo di guasto più difficile da diagnosticare, perché stai guardando
+> nel posto sbagliato.
+
+### Rotta IPv6 verso la LAN — la più importante
+
+Lo schema usa due `/64` distinti:
+
+| Prefisso | Dove |
+|---|---|
+| `2a01:e11:401:a950::/64` | collegamento MikroTik ↔ IliadBox |
+| `2a01:e11:401:a951::/64` | LAN interna |
+
+Perché il traffico di ritorno trovi la strada, **la IliadBox deve sapere che
+`a951::/64` sta dietro il MikroTik**. Sul pannello della box, sottorete ID 1:
+
+| Campo | Valore |
+|---|---|
+| Destinazione | `2a01:e11:401:a951::/64` |
+| **Next Hop** | **`fe80::c6ad:34ff:fef2:f255`** |
+
+⚠️ Il next hop è il **link-local di `ether1`** del MikroTik, **non**
+`2a01:e11:401:a950::2`. È l'errore intuitivo da evitare.
+
+L'indirizzo deriva dal MAC di `ether1` (`C4:AD:34:F2:F2:55`), quindi è
+stabile: cambia solo se sostituisci l'apparato o forzi il MAC.
+
+Per rileggerlo dal router:
+
+```
+/ipv6 address print detail where interface=ether1
+```
+
+**Sintomo se manca:** `test-ipv6.com` dà punteggio 0, i client hanno un
+indirizzo IPv6 valido, e sul MikroTik non c'è assolutamente nulla fuori
+posto.
+
+### Altre impostazioni che vivono sulla box
+
+| Cosa | Quando serve | Note |
+|---|---|---|
+| Modalità ONT/bridge vs router | sempre | determina se la WAN del MikroTik è pubblica o privata |
+| Prefisso IPv6 delegato | sempre | verificato stabile attraverso un reset della box |
+| Port forward 51820 / 1194 UDP | solo in router mode | vedi [Setup transitorio](#setup-transitorio--iliadbox-in-modalità-router) |
+| DMZ verso il MikroTik | solo in router mode | alternativa ai forward |
+| Prenotazione DHCP per il MikroTik | solo in router mode | senza, i forward puntano nel vuoto |
+
+### Da rifare ogni volta che resetti la IliadBox
+
+- [ ] Rimetti la modalità ONT/bridge
+- [ ] **Rotta IPv6 sottorete ID 1** con il next hop link-local qui sopra
+- [ ] Verifica che il prefisso delegato sia sempre lo stesso
+- [ ] `/ping 2606:4700:4700::1111` dal router
+- [ ] `test-ipv6.com` da un client — deve tornare 10
 
 ---
 
